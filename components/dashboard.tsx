@@ -343,9 +343,103 @@ export function Dashboard() {
           </TabsContent>
 
           <TabsContent value="goals" className="mt-6">
-            <div className="text-center py-12">
-              <h3 className="text-xl font-semibold mb-2">Goal Management</h3>
-              <p className="text-gray-400">Advanced goal setting coming soon...</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Current Goals */}
+              <Card className="bg-gray-800 border-gray-700">
+                <CardHeader>
+                  <CardTitle>Current Goals</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Speed Goal</span>
+                      <Badge variant="outline">{goals.wpm.current}/{goals.wpm.target} WPM</Badge>
+                    </div>
+                    <Progress value={goals.wpm.progress} className="h-2" />
+                    <p className="text-sm text-gray-400">Improve your typing speed to {goals.wpm.target} WPM</p>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Accuracy Goal</span>
+                      <Badge variant="outline">{goals.accuracy.current}/{goals.accuracy.target}%</Badge>
+                    </div>
+                    <Progress value={goals.accuracy.progress} className="h-2" />
+                    <p className="text-sm text-gray-400">Maintain {goals.accuracy.target}% accuracy consistently</p>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Consistency Goal</span>
+                      <Badge variant="outline">{goals.consistency.current}/{goals.consistency.target} days</Badge>
+                    </div>
+                    <Progress value={goals.consistency.progress} className="h-2" />
+                    <p className="text-sm text-gray-400">Practice typing for {goals.consistency.target} consecutive days</p>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Goal Statistics */}
+              <Card className="bg-gray-800 border-gray-700">
+                <CardHeader>
+                  <CardTitle>Goal Progress</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="text-center p-4 bg-blue-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-400">{Math.round(goals.wpm.progress)}%</div>
+                      <div className="text-sm text-gray-400">Speed Goal Progress</div>
+                    </div>
+                    
+                    <div className="text-center p-4 bg-green-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-green-400">{Math.round(goals.accuracy.progress)}%</div>
+                      <div className="text-sm text-gray-400">Accuracy Goal Progress</div>
+                    </div>
+                    
+                    <div className="text-center p-4 bg-purple-900/20 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-400">{Math.round(goals.consistency.progress)}%</div>
+                      <div className="text-sm text-gray-400">Consistency Goal Progress</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Milestones */}
+              <Card className="bg-gray-800 border-gray-700 lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Upcoming Milestones</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 bg-gray-700/50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Zap className="w-5 h-5 text-blue-400" />
+                        <span className="font-medium">Speed Milestone</span>
+                      </div>
+                      <p className="text-sm text-gray-400 mb-2">Next: {goals.wpm.target + 10} WPM</p>
+                      <Progress value={30} className="h-1" />
+                    </div>
+                    
+                    <div className="p-4 bg-gray-700/50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Target className="w-5 h-5 text-green-400" />
+                        <span className="font-medium">Accuracy Milestone</span>
+                      </div>
+                      <p className="text-sm text-gray-400 mb-2">Next: 99% Accuracy</p>
+                      <Progress value={85} className="h-1" />
+                    </div>
+                    
+                    <div className="p-4 bg-gray-700/50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Trophy className="w-5 h-5 text-yellow-400" />
+                        <span className="font-medium">Achievement</span>
+                      </div>
+                      <p className="text-sm text-gray-400 mb-2">Next: 100 Tests Completed</p>
+                      <Progress value={userStats.totalTests} className="h-1" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
