@@ -21,12 +21,7 @@ import { generateRandomWords, getRandomQuote } from "@/lib/texts"
 import { useHistory } from "@/hooks/use-history"
 import { useKeySound } from "@/hooks/use-key-sound"
 
-const sampleTexts = [
-  "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the alphabet at least once.",
-  "In a hole in the ground there lived a hobbit. Not a nasty, dirty, wet hole filled with the ends of worms and an oozy smell.",
-  "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness.",
-  "To be or not to be, that is the question. Whether 'tis nobler in the mind to suffer the slings and arrows of outrageous fortune.",
-]
+
 
 interface TypingStats {
   wpm: number
@@ -51,7 +46,7 @@ export default function TypingPlatform() {
   // Typing test state
   const { settings, update } = useSettings()
   const { addResult } = useHistory()
-  const [text, setText] = useState(sampleTexts[0])
+  const [text, setText] = useState("Loading text...")
   const [userInput, setUserInput] = useState("")
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isTyping, setIsTyping] = useState(false)
@@ -97,11 +92,12 @@ export default function TypingPlatform() {
   const keySound = useKeySound(soundEnabled)
   // Load dynamic text (API-backed) based on mode
   const loadNewText = useCallback(async () => {
+    if (testMode === "words") {
+      setText(generateRandomWords(wordCount))
+      return
+    }
+    
     try {
-      if (testMode === "words") {
-        setText(generateRandomWords(wordCount))
-        return
-      }
       const minLength = testMode === "time" ? 120 : 80
       const maxLength = testMode === "time" ? 220 : 160
       const res = await fetch(`https://api.quotable.io/random?minLength=${minLength}&maxLength=${maxLength}`)
@@ -112,11 +108,10 @@ export default function TypingPlatform() {
           return
         }
       }
-      // Fallback
-      setText(sampleTexts[Math.floor(Math.random() * sampleTexts.length)])
-    } catch {
-      setText(sampleTexts[Math.floor(Math.random() * sampleTexts.length)])
-    }
+    } catch {}
+    
+    // Generate truly random text if API fails
+    setText(generateRandomWords(testMode === "time" ? 50 : 30))
   }, [testMode, wordCount])
 
   useEffect(() => {
