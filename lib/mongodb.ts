@@ -6,8 +6,8 @@ if (isMongoDisabled) {
   console.log('📴 MongoDB disabled - running in offline mode')
 }
 
-let client: MongoClient
-let clientPromise: Promise<MongoClient>
+let client: MongoClient | null = null
+let clientPromise: Promise<MongoClient> | null = null
 
 if (!isMongoDisabled && process.env.MONGODB_URI) {
   const uri = process.env.MONGODB_URI
@@ -34,10 +34,10 @@ if (!isMongoDisabled && process.env.MONGODB_URI) {
 
 // Export a module-scoped MongoClient promise. By doing this in a
 // separate module, the client can be shared across functions.
-export default clientPromise
+export default clientPromise || Promise.reject(new Error('MongoDB is disabled'))
 
 export async function getDb(): Promise<Db> {
-  if (process.env.MONGODB_DISABLED === 'true') {
+  if (process.env.MONGODB_DISABLED === 'true' || !clientPromise) {
     throw new Error('MongoDB is disabled')
   }
   
@@ -51,7 +51,7 @@ export async function getDb(): Promise<Db> {
 }
 
 export async function getCollection(collectionName: string) {
-  if (process.env.MONGODB_DISABLED === 'true') {
+  if (process.env.MONGODB_DISABLED === 'true' || !clientPromise) {
     throw new Error('MongoDB is disabled')
   }
   
