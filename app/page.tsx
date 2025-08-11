@@ -326,23 +326,46 @@ export default function TypingPlatform() {
     inputRef.current?.focus()
   }
 
+  // Calculate visible text range (3 lines)
+  const getVisibleText = () => {
+    const words = text.split(' ')
+    const wordsPerLine = 12 // Approximate words per line
+    const totalLines = Math.ceil(words.length / wordsPerLine)
+    const currentLine = Math.floor(currentIndex / (wordsPerLine * 6)) // Approx chars per line
+    
+    const startLine = Math.max(0, currentLine - 1)
+    const endLine = Math.min(totalLines, startLine + 3)
+    
+    const startWordIndex = startLine * wordsPerLine
+    const endWordIndex = endLine * wordsPerLine
+    
+    const visibleWords = words.slice(startWordIndex, endWordIndex)
+    const visibleText = visibleWords.join(' ')
+    
+    const textBeforeVisible = words.slice(0, startWordIndex).join(' ')
+    const offsetIndex = textBeforeVisible.length + (textBeforeVisible.length > 0 ? 1 : 0)
+    
+    return { visibleText, offsetIndex }
+  }
+
   // Render character with proper styling
-  const renderCharacter = (char: string, index: number) => {
+  const renderCharacter = (char: string, index: number, offsetIndex: number) => {
+    const actualIndex = index + offsetIndex
     let className = "transition-all duration-200 px-0.5 py-0.5 rounded-sm "
 
-    if (index < userInput.length) {
+    if (actualIndex < userInput.length) {
       className +=
-        userInput[index] === char
+        userInput[actualIndex] === char
           ? "text-emerald-300 char-correct text-glow-green"
           : "text-red-300 char-incorrect text-glow-red"
-    } else if (index === currentIndex) {
+    } else if (actualIndex === currentIndex) {
       className += "text-blue-200 char-current text-glow"
     } else {
       className += "text-slate-300"
     }
 
     return (
-      <span key={index} className={className}>
+      <span key={actualIndex} className={className}>
         {char === " " ? "·" : char}
       </span>
     )
@@ -646,23 +669,29 @@ export default function TypingPlatform() {
           <div className="relative h-full flex flex-col">
             <div
               ref={textRef}
-              className={cn("mb-4 select-none", focusMode && "text-center")}
-              className="autoscale-text"
+              className={cn("mb-4 select-none autoscale-text", focusMode && "text-center")}
               style={{
                 fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial",
-                lineHeight: "1.6",
+                lineHeight: "1.8",
                 wordWrap: "break-word",
                 overflowWrap: "break-word",
                 letterSpacing: "0.02em",
                 maxWidth: focusMode ? "min(90vw, 1200px)" : undefined,
-                maxHeight: focusMode ? undefined : "40vh",
-                overflow: focusMode ? "visible" : "auto"
+                height: "4.5em",
+                overflow: "hidden"
               }}
             >
-              {text.split("").map((char, index) => renderCharacter(char, index))}
-              {currentIndex === text.length && (
-                <span className="typing-caret w-0.5 h-6 inline-block ml-1 rounded-full" />
-              )}
+              {(() => {
+                const { visibleText, offsetIndex } = getVisibleText()
+                return (
+                  <>
+                    {visibleText.split("").map((char, index) => renderCharacter(char, index, offsetIndex))}
+                    {currentIndex >= offsetIndex && currentIndex < offsetIndex + visibleText.length && (
+                      <span className="typing-caret w-0.5 h-6 inline-block ml-1 rounded-full" />
+                    )}
+                  </>
+                )
+              })()}
             </div>
 
             <input
