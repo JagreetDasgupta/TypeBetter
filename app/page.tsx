@@ -20,8 +20,7 @@ import { useSettings } from "@/hooks/use-settings"
 import { generateRandomWords, getRandomQuote } from "@/lib/texts"
 import { useHistory } from "@/hooks/use-history"
 import { useKeySound } from "@/hooks/use-key-sound"
-
-
+import { useAuth } from "@/hooks/use-auth"
 
 interface TypingStats {
   wpm: number
@@ -39,9 +38,9 @@ interface AntiCheatFlags {
 
 export default function TypingPlatform() {
   const [currentView, setCurrentView] = useState<"typing" | "leaderboard" | "dashboard" | "settings">("typing")
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const { isAuthenticated, user, signIn } = useAuth()
 
   // Typing test state
   const { settings, update } = useSettings()
@@ -90,6 +89,25 @@ export default function TypingPlatform() {
 
   const typingTracker = useTypingTracker(text)
   const keySound = useKeySound(soundEnabled)
+
+  // Check for session on page load
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const response = await fetch('/api/auth/session')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.user) {
+            signIn(data.user.username || data.user.email, data.user.avatarUrl)
+          }
+        }
+      } catch (error) {
+        console.log('No active session')
+      }
+    }
+    checkSession()
+  }, [signIn])
+
   // Load dynamic text (API-backed) based on mode
   const loadNewText = useCallback(async () => {
     if (testMode === "words") {
@@ -119,7 +137,6 @@ export default function TypingPlatform() {
     loadNewText()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
 
   // Handle layout toggle with animation
   const toggleLayoutMode = () => {
@@ -342,14 +359,10 @@ export default function TypingPlatform() {
           setShowSettings={setShowSettings}
         />
         <Leaderboard />
-        {/* Global modals available from any view */}
         <AuthModal
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
-          onAuthenticated={() => {
-            setIsAuthenticated(true)
-            setShowAuthModal(false)
-          }}
+          onAuthenticated={() => setShowAuthModal(false)}
         />
         <Settings
           isOpen={showSettings}
@@ -384,14 +397,10 @@ export default function TypingPlatform() {
           setShowSettings={setShowSettings}
         />
         <Dashboard />
-        {/* Global modals available from any view */}
         <AuthModal
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
-          onAuthenticated={() => {
-            setIsAuthenticated(true)
-            setShowAuthModal(false)
-          }}
+          onAuthenticated={() => setShowAuthModal(false)}
         />
         <Settings
           isOpen={showSettings}
@@ -761,10 +770,7 @@ export default function TypingPlatform() {
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        onAuthenticated={() => {
-          setIsAuthenticated(true)
-          setShowAuthModal(false)
-        }}
+        onAuthenticated={() => setShowAuthModal(false)}
       />
 
       <Settings

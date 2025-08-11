@@ -24,7 +24,11 @@ export function Navigation({
   setShowSettings,
   isCompactMode = false,
 }: NavigationProps) {
-  const { signOut } = useAuth()
+  const { signOut, user } = useAuth()
+  
+  const handleSignOut = async () => {
+    await signOut()
+  }
   return (
     <nav className={cn("glass-nav sticky top-0 z-50 nav-transition", isCompactMode && "compact-mode")}>
       <div className={cn("container mx-auto px-6 layout-transition", isCompactMode ? "py-2" : "py-3")}>
@@ -124,7 +128,7 @@ export function Navigation({
                           isCompactMode ? "text-xs" : "text-xs",
                         )}
                       >
-                        U
+                        {user?.username?.charAt(0).toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -141,7 +145,7 @@ export function Navigation({
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="rounded-lg hover:bg-red-500/10 text-red-300" onClick={signOut}>
+                  <DropdownMenuItem className="rounded-lg hover:bg-red-500/10 text-red-300" onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>

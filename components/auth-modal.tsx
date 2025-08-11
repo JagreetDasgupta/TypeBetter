@@ -27,11 +27,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
 
   const handleSocialLogin = async (provider: string) => {
     setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      onAuthenticated()
-    }, 1000)
+    window.location.href = `/api/auth/${provider}`
   }
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -164,7 +160,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
-              onClick={() => window.location.href = '/api/auth/google'}
+              onClick={() => handleSocialLogin('google')}
               disabled={isLoading}
               className="bg-gray-800 border-gray-700 hover:bg-gray-700"
             >
@@ -174,7 +170,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
 
             <Button
               variant="outline"
-              onClick={() => window.location.href = '/api/auth/github'}
+              onClick={() => handleSocialLogin('github')}
               disabled={isLoading}
               className="bg-gray-800 border-gray-700 hover:bg-gray-700"
             >
@@ -185,7 +181,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
 
           <Button
             variant="outline"
-            onClick={() => window.location.href = '/api/auth/facebook'}
+            onClick={() => handleSocialLogin('facebook')}
             disabled={isLoading}
             className="w-full bg-gray-800 border-gray-700 hover:bg-gray-700"
           >

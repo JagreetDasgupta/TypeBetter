@@ -26,7 +26,12 @@ export function useAuth() {
     signIn(username: string, avatarUrl?: string) {
       setAuth({ isAuthenticated: true, user: { username, avatarUrl } })
     },
-    signOut() {
+    async signOut() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' })
+      } catch (error) {
+        console.log('Logout error:', error)
+      }
       setAuth(DEFAULT_AUTH)
     },
     continueAsGuest() {
