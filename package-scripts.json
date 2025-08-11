@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "populate-dummy": "node scripts/populate-dummy-data.js",
+    "clear-dummy": "node scripts/clear-dummy-data.js"
+  }
+}

@@ -16,6 +16,10 @@ import { AuthModal } from "@/components/auth-modal"
 import { AlertTriangle, Eye, EyeOff, Zap, Target, Clock, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTypingTracker } from "@/components/typing-tracker"
+import { useSettings } from "@/hooks/use-settings"
+import { generateRandomWords, getRandomQuote } from "@/lib/texts"
+import { useHistory } from "@/hooks/use-history"
+import { useKeySound } from "@/hooks/use-key-sound"
 
 const sampleTexts = [
   "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the alphabet at least once.",
@@ -45,6 +49,8 @@ export default function TypingPlatform() {
   const [showSettings, setShowSettings] = useState(false)
 
   // Typing test state
+  const { settings, update } = useSettings()
+  const { addResult } = useHistory()
   const [text, setText] = useState(sampleTexts[0])
   const [userInput, setUserInput] = useState("")
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -77,16 +83,48 @@ export default function TypingPlatform() {
   const textRef = useRef<HTMLDivElement>(null)
 
   // Settings
-  const [testMode, setTestMode] = useState<"time" | "words" | "quote">("time")
-  const [testDuration, setTestDuration] = useState(60)
-  const [soundEnabled, setSoundEnabled] = useState(true)
-  const [theme, setTheme] = useState("dark")
+  const [testMode, setTestMode] = useState<"time" | "words" | "quote">(settings.testMode)
+  const [testDuration, setTestDuration] = useState(settings.testDuration)
+  const [wordCount, setWordCount] = useState(settings.wordCount)
+  const [soundEnabled, setSoundEnabled] = useState(settings.soundEnabled)
+  const [theme, setTheme] = useState(settings.theme)
 
   // Layout preferences with animation state
   const [isCompactMode, setIsCompactMode] = useState(true)
   const [isAnimating, setIsAnimating] = useState(false)
 
   const typingTracker = useTypingTracker(text)
+  const keySound = useKeySound(soundEnabled)
+  // Load dynamic text (API-backed) based on mode
+  const loadNewText = useCallback(async () => {
+    try {
+      if (testMode === "words") {
+        setText(generateRandomWords(wordCount))
+        return
+      }
+      const minLength = testMode === "time" ? 120 : 80
+      const maxLength = testMode === "time" ? 220 : 160
+      const res = await fetch(`https://api.quotable.io/random?minLength=${minLength}&maxLength=${maxLength}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data?.content) {
+          setText(String(data.content))
+          return
+        }
+      }
+      // Fallback
+      setText(sampleTexts[Math.floor(Math.random() * sampleTexts.length)])
+    } catch {
+      setText(sampleTexts[Math.floor(Math.random() * sampleTexts.length)])
+    }
+  }, [testMode, wordCount])
+
+  useEffect(() => {
+    // Initial load
+    loadNewText()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
 
   // Handle layout toggle with animation
   const toggleLayoutMode = () => {
@@ -102,6 +140,23 @@ export default function TypingPlatform() {
       setIsAnimating(false)
     }, 600)
   }
+
+  // Reflect settings changes to local storage
+  useEffect(() => {
+    update("testMode", testMode)
+  }, [testMode])
+  useEffect(() => {
+    update("testDuration", testDuration)
+  }, [testDuration])
+  useEffect(() => {
+    update("wordCount", wordCount)
+  }, [wordCount])
+  useEffect(() => {
+    update("soundEnabled", soundEnabled)
+  }, [soundEnabled])
+  useEffect(() => {
+    update("theme", theme)
+  }, [theme])
 
   // Calculate stats in real-time
   const calculateStats = useCallback(() => {
@@ -189,6 +244,7 @@ export default function TypingPlatform() {
       const expectedChar = text[value.length - 1]
       const isCorrect = newChar === expectedChar
       typingTracker.recordKeystroke(newChar, isCorrect)
+      keySound.play(isCorrect)
     }
 
     setUserInput(value)
@@ -199,6 +255,14 @@ export default function TypingPlatform() {
       setEndTime(Date.now())
       setIsTyping(false)
       typingTracker.stopTracking()
+      addResult({
+        mode: testMode,
+        durationSeconds: startTime ? Math.round((Date.now() - startTime) / 1000) : 0,
+        textLength: text.length,
+        wpm: stats.wpm,
+        accuracy: stats.accuracy,
+        errors: stats.errors,
+      })
       setTimeout(() => setShowResults(true), 500) // Small delay to show final stats
     }
 
@@ -207,6 +271,14 @@ export default function TypingPlatform() {
       setEndTime(Date.now())
       setIsTyping(false)
       typingTracker.stopTracking()
+      addResult({
+        mode: testMode,
+        durationSeconds: testDuration,
+        textLength: text.length,
+        wpm: stats.wpm,
+        accuracy: stats.accuracy,
+        errors: stats.errors,
+      })
       setTimeout(() => setShowResults(true), 500)
     }
   }
@@ -236,7 +308,8 @@ export default function TypingPlatform() {
       errors: 0,
       timeElapsed: 0,
     })
-    setText(sampleTexts[Math.floor(Math.random() * sampleTexts.length)])
+    // Load fresh text according to mode
+    loadNewText()
     typingTracker.reset()
     inputRef.current?.focus()
   }
@@ -253,7 +326,7 @@ export default function TypingPlatform() {
     } else if (index === currentIndex) {
       className += "text-blue-200 char-current text-glow"
     } else {
-      className += "text-slate-400"
+      className += "text-slate-300"
     }
 
     return (
@@ -274,6 +347,33 @@ export default function TypingPlatform() {
           setShowSettings={setShowSettings}
         />
         <Leaderboard />
+        {/* Global modals available from any view */}
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onAuthenticated={() => {
+            setIsAuthenticated(true)
+            setShowAuthModal(false)
+          }}
+        />
+        <Settings
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          testMode={testMode}
+          setTestMode={setTestMode}
+          testDuration={testDuration}
+          setTestDuration={setTestDuration}
+          wordCount={wordCount}
+          setWordCount={setWordCount}
+          soundEnabled={soundEnabled}
+          setSoundEnabled={setSoundEnabled}
+          theme={theme}
+          setTheme={setTheme}
+          focusMode={focusMode}
+          setFocusMode={setFocusMode}
+          keyboardLayout={settings.keyboardLayout as any}
+          setKeyboardLayout={(layout) => update("keyboardLayout", layout)}
+        />
       </div>
     )
   }
@@ -289,6 +389,33 @@ export default function TypingPlatform() {
           setShowSettings={setShowSettings}
         />
         <Dashboard />
+        {/* Global modals available from any view */}
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onAuthenticated={() => {
+            setIsAuthenticated(true)
+            setShowAuthModal(false)
+          }}
+        />
+        <Settings
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          testMode={testMode}
+          setTestMode={setTestMode}
+          testDuration={testDuration}
+          setTestDuration={setTestDuration}
+          wordCount={wordCount}
+          setWordCount={setWordCount}
+          soundEnabled={soundEnabled}
+          setSoundEnabled={setSoundEnabled}
+          theme={theme}
+          setTheme={setTheme}
+          focusMode={focusMode}
+          setFocusMode={setFocusMode}
+          keyboardLayout={settings.keyboardLayout as any}
+          setKeyboardLayout={(layout) => update("keyboardLayout", layout)}
+        />
       </div>
     )
   }
@@ -309,46 +436,36 @@ export default function TypingPlatform() {
         isCompactMode={isCompactMode}
       />
 
-      <main
-        className={cn("h-full flex flex-col px-4 relative z-10 layout-transition", isCompactMode ? "py-2" : "py-6")}
-      >
-        {/* Animated Header */}
-        <div
-          className={cn(
-            "text-center header-transition layout-stable",
-            isCompactMode ? "mb-3" : "mb-6",
-            isAnimating && (isCompactMode ? "compact-mode" : "normal-mode"),
-          )}
-        >
-          <h1
-            className={cn(
-              "font-bold text-glow text-size-transition",
-              isCompactMode ? "text-2xl mb-1" : "text-4xl mb-3",
-              isAnimating && "size-change",
-            )}
+      {focusMode && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <Button
+            onClick={() => setFocusMode(false)}
+            className="glass-button rounded-lg px-3 py-2"
+            size="sm"
+            title="Exit Focus"
           >
-            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">
-              TypeMaster Pro
-            </span>
-          </h1>
-          <p
-            className={cn(
-              "text-slate-300 opacity-70 text-size-transition",
-              isCompactMode ? "text-xs" : "text-sm",
-              isAnimating && "size-change",
-            )}
-          >
-            Experience the future of typing practice
-          </p>
+            <EyeOff className="w-4 h-4 mr-1" />
+            Exit Focus
+          </Button>
         </div>
+      )}
+
+      <main
+        className={cn(
+          "min-h-screen grid px-4 relative z-10 layout-transition",
+          focusMode ? "grid-rows-[1fr] place-items-center py-6" : "grid-rows-[auto_auto_1fr]",
+          !focusMode && (isCompactMode ? "py-2 gap-3" : "py-4 gap-5"),
+        )}
+      >
 
         {/* Animated Stats Bar */}
-        <div
-          className={cn(
-            "flex justify-center stats-container layout-stable",
-            isCompactMode ? "gap-2 mb-3" : "gap-4 mb-6",
-          )}
-        >
+        {!focusMode && (
+          <div
+            className={cn(
+              "flex justify-center stats-container layout-stable row-start-1",
+              isCompactMode ? "gap-2 mb-1" : "gap-3 mb-3 scale-105",
+            )}
+          >
           <div
             className={cn(
               "stat-card rounded-lg text-center stat-card-animated layout-stable",
@@ -512,25 +629,34 @@ export default function TypingPlatform() {
               </Badge>
             </div>
           )}
-        </div>
+          </div>
+        )}
 
         {/* Typing Area */}
         <Card
           className={cn(
-            "typing-glass rounded-2xl p-6 flex-1 max-w-5xl mx-auto shadow-premium w-full layout-transition",
-            isCompactMode ? "mb-3" : "mb-6",
+            "typing-glass rounded-2xl shadow-premium layout-transition",
+            focusMode
+              ? "inline-block w-auto max-w-none row-start-1"
+              : "max-w-6xl mx-auto w-full row-start-2",
+            isCompactMode ? "p-4 mb-2" : "p-6 mb-3",
           )}
         >
           <div className="relative h-full flex flex-col">
             <div
               ref={textRef}
-              className="text-lg leading-relaxed font-mono mb-4 select-none flex-1 overflow-hidden"
+              className={cn("mb-4 select-none", focusMode && "text-center")}
               style={{
-                lineHeight: "2rem",
-                maxHeight: "8rem",
+                fontFamily:
+                  "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial",
+                fontSize: isCompactMode ? "clamp(14px, 1.2vw, 20px)" : "clamp(16px, 1.6vw, 22px)",
+                lineHeight: isCompactMode ? "clamp(1.6rem, 2.2vw, 2.2rem)" : "clamp(1.8rem, 2.6vw, 2.6rem)",
                 wordWrap: "break-word",
                 overflowWrap: "break-word",
                 letterSpacing: "0.02em",
+                maxWidth: focusMode ? "min(90vw, 1200px)" : undefined,
+                maxHeight: focusMode ? undefined : !isCompactMode ? "min(36vh, 420px)" : undefined,
+                overflow: focusMode ? "visible" : !isCompactMode ? "auto" : "visible",
               }}
             >
               {text.split("").map((char, index) => renderCharacter(char, index))}
@@ -550,6 +676,7 @@ export default function TypingPlatform() {
               disabled={showResults}
             />
 
+            {!focusMode && (
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <Button onClick={resetTest} className="glass-button rounded-lg px-4 py-2 text-sm font-medium">
@@ -608,18 +735,22 @@ export default function TypingPlatform() {
                 </Button>
               </div>
             </div>
+            )}
           </div>
         </Card>
 
         {/* Keyboard Guide */}
-        <div className="flex-shrink-0">
-          <VirtualKeyboard
-            currentChar={userInput.length > 0 ? userInput[userInput.length - 1] : ""}
-            nextChar={text[currentIndex] || ""}
-            pressedKeys={new Set()}
-            layout="qwerty"
-          />
-        </div>
+        {!focusMode && (
+          <div className="flex-shrink-0 pb-4 flex items-start justify-center row-start-3" style={{ minHeight: isCompactMode ? "36vh" : "28vh" }}>
+            <VirtualKeyboard
+              currentChar={userInput.length > 0 ? userInput[userInput.length - 1] : ""}
+              nextChar={text[currentIndex] || ""}
+              pressedKeys={new Set()}
+              layout={settings.keyboardLayout as any}
+              size={isCompactMode ? "compact" : "expanded"}
+            />
+          </div>
+        )}
       </main>
 
       {/* Modals */}
@@ -648,12 +779,16 @@ export default function TypingPlatform() {
         setTestMode={setTestMode}
         testDuration={testDuration}
         setTestDuration={setTestDuration}
+        wordCount={wordCount}
+        setWordCount={setWordCount}
         soundEnabled={soundEnabled}
         setSoundEnabled={setSoundEnabled}
         theme={theme}
         setTheme={setTheme}
         focusMode={focusMode}
         setFocusMode={setFocusMode}
+        keyboardLayout={settings.keyboardLayout as any}
+        setKeyboardLayout={(layout) => update("keyboardLayout", layout)}
       />
     </div>
   )

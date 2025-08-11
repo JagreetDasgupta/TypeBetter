@@ -183,7 +183,18 @@ export function ResultsModal({ isOpen, onClose, stats, onRetry, isDisqualified, 
               <RotateCcw className="w-4 h-4" />
               Try Again
             </Button>
-            <Button variant="outline" className="flex items-center gap-2 bg-transparent">
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 bg-transparent"
+              onClick={async () => {
+                const summary = `Typing Test Results\nWPM: ${stats.wpm}\nAccuracy: ${stats.accuracy}%\nErrors: ${stats.errors}\nTime: ${stats.timeElapsed}s${isDisqualified ? "\nStatus: Disqualified (anti-cheat)" : ""}`
+                try {
+                  await navigator.clipboard.writeText(summary)
+                } catch (e) {
+                  // ignore clipboard errors
+                }
+              }}
+            >
               <Share2 className="w-4 h-4" />
               Share Results
             </Button>

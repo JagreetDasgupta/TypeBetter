@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Trophy, Target, Clock, TrendingUp, Award, Edit3, Zap, Activity } from "lucide-react"
 import { Analytics } from "@/components/analytics"
+import { useHistory } from "@/hooks/use-history"
 
 const mockProgressData = [
   { date: "2024-01-01", wpm: 45, accuracy: 92 },
@@ -40,22 +41,25 @@ const achievements = [
 
 export function Dashboard() {
   const [selectedGoal, setSelectedGoal] = useState<"wpm" | "accuracy" | "consistency">("wpm")
+  const { history, metrics } = useHistory()
+
+  const m = metrics()
 
   const userStats = {
-    totalTests: 247,
-    averageWpm: 58,
-    bestWpm: 72,
-    averageAccuracy: 95.2,
-    bestAccuracy: 99.1,
-    totalTimeTyping: 1247, // minutes
-    currentStreak: 12,
-    bestStreak: 28,
+    totalTests: m.tests,
+    averageWpm: m.avgWpm,
+    bestWpm: m.bestWpm,
+    averageAccuracy: m.avgAccuracy,
+    bestAccuracy: Math.max(...(history.length ? history.map((h) => h.accuracy) : [0])),
+    totalTimeTyping: Math.round(history.reduce((a, h) => a + h.durationSeconds, 0) / 60),
+    currentStreak: 0,
+    bestStreak: 0,
   }
 
   const goals = {
-    wpm: { current: 58, target: 70, progress: (58 / 70) * 100 },
-    accuracy: { current: 95.2, target: 98, progress: (95.2 / 98) * 100 },
-    consistency: { current: 12, target: 30, progress: (12 / 30) * 100 },
+    wpm: { current: userStats.averageWpm, target: Math.max(50, userStats.averageWpm + 10), progress: (userStats.averageWpm / Math.max(50, userStats.averageWpm + 10)) * 100 },
+    accuracy: { current: userStats.averageAccuracy, target: Math.min(100, Math.round(userStats.averageAccuracy + 3)), progress: (userStats.averageAccuracy / Math.min(100, Math.round(userStats.averageAccuracy + 3))) * 100 },
+    consistency: { current: userStats.currentStreak, target: 7, progress: (userStats.currentStreak / 7) * 100 },
   }
 
   return (
@@ -114,11 +118,11 @@ export function Dashboard() {
           </Card>
         </div>
 
-        <Tabs defaultValue="overview" className="w-full">
+         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-4 bg-gray-800">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
+             <TabsTrigger value="history">History</TabsTrigger>
             <TabsTrigger value="goals">Goals</TabsTrigger>
           </TabsList>
 
@@ -167,16 +171,16 @@ export function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {mockTestHistory.map((test, index) => (
+                      {(history.length ? history : mockTestHistory).slice(0, 10).map((test: any, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
                           <div className="flex items-center space-x-4">
-                            <Badge variant="outline">{test.mode}</Badge>
+                            <Badge variant="outline">{test.mode || "Time"}</Badge>
                             <div>
                               <div className="font-semibold">
                                 {test.wpm} WPM • {test.accuracy}% Accuracy
                               </div>
                               <div className="text-sm text-gray-400">
-                                {test.date} • {test.duration}s
+                                {test.date || new Date(test.timestamp).toLocaleString()} • {test.duration || test.durationSeconds}s
                               </div>
                             </div>
                           </div>
@@ -314,10 +318,28 @@ export function Dashboard() {
           </TabsContent>
 
           <TabsContent value="history" className="mt-6">
-            <div className="text-center py-12">
-              <h3 className="text-xl font-semibold mb-2">Test History</h3>
-              <p className="text-gray-400">Detailed test history coming soon...</p>
-            </div>
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">Recent Tests</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {history.length === 0 ? (
+                  <div className="text-center text-gray-400">No tests yet. Take a test to see your history.</div>
+                ) : (
+                  <div className="space-y-3 max-h-[420px] overflow-auto pr-1">
+                    {history.slice(0, 50).map((h) => (
+                      <div key={h.id} className="grid grid-cols-6 items-center gap-3 p-3 bg-gray-700/40 rounded-lg">
+                        <div className="col-span-2 truncate text-sm text-gray-300">{new Date(h.timestamp).toLocaleString()}</div>
+                        <div className="text-blue-400 font-semibold">{h.wpm} WPM</div>
+                        <div className="text-green-400 font-semibold">{h.accuracy}%</div>
+                        <div className="text-purple-400 font-semibold">{h.adjustedWpm} adj</div>
+                        <div className="text-gray-400 text-sm">{h.durationSeconds}s</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="goals" className="mt-6">

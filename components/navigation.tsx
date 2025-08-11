@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Keyboard, Trophy, BarChart3, Settings, User, LogOut, Sparkles } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 
 interface NavigationProps {
@@ -23,6 +24,7 @@ export function Navigation({
   setShowSettings,
   isCompactMode = false,
 }: NavigationProps) {
+  const { signOut } = useAuth()
   return (
     <nav className={cn("glass-nav sticky top-0 z-50 nav-transition", isCompactMode && "compact-mode")}>
       <div className={cn("container mx-auto px-6 layout-transition", isCompactMode ? "py-2" : "py-3")}>
@@ -42,8 +44,8 @@ export function Navigation({
               </div>
               <span
                 className={cn(
-                  "font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent text-size-transition",
-                  isCompactMode ? "text-base" : "text-lg",
+                  "font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent text-size-transition text-glow",
+                  isCompactMode ? "text-base" : "text-xl",
                 )}
               >
                 TypeMaster Pro
@@ -64,6 +66,21 @@ export function Navigation({
                 <span>Practice</span>
               </Button>
 
+              
+
+              <Button
+                variant={currentView === "dashboard" ? "default" : "ghost"}
+                onClick={() => setCurrentView("dashboard")}
+                className={cn(
+                  "glass-button rounded-lg flex items-center space-x-2 text-sm layout-transition",
+                  isCompactMode ? "px-3 py-1" : "px-4 py-1.5",
+                  currentView === "dashboard" ? "bg-blue-500/20 border-blue-400/40" : "",
+                )}
+              >
+                <BarChart3 className={cn("icon-transition", isCompactMode ? "w-3 h-3" : "w-3.5 h-3.5")} />
+                <span>Dashboard</span>
+              </Button>
+
               <Button
                 variant={currentView === "leaderboard" ? "default" : "ghost"}
                 onClick={() => setCurrentView("leaderboard")}
@@ -76,21 +93,6 @@ export function Navigation({
                 <Trophy className={cn("icon-transition", isCompactMode ? "w-3 h-3" : "w-3.5 h-3.5")} />
                 <span>Leaderboard</span>
               </Button>
-
-              {isAuthenticated && (
-                <Button
-                  variant={currentView === "dashboard" ? "default" : "ghost"}
-                  onClick={() => setCurrentView("dashboard")}
-                  className={cn(
-                    "glass-button rounded-lg flex items-center space-x-2 text-sm layout-transition",
-                    isCompactMode ? "px-3 py-1" : "px-4 py-1.5",
-                    currentView === "dashboard" ? "bg-blue-500/20 border-blue-400/40" : "",
-                  )}
-                >
-                  <BarChart3 className={cn("icon-transition", isCompactMode ? "w-3 h-3" : "w-3.5 h-3.5")} />
-                  <span>Dashboard</span>
-                </Button>
-              )}
             </div>
           </div>
 
@@ -139,7 +141,7 @@ export function Navigation({
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="rounded-lg hover:bg-red-500/10 text-red-300">
+                  <DropdownMenuItem className="rounded-lg hover:bg-red-500/10 text-red-300" onClick={signOut}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>

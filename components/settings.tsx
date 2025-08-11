@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
-import { SettingsIcon, Keyboard, Palette, Volume2, Shield, Clock, Type, Quote } from "lucide-react"
+import { SettingsIcon, Keyboard as KeyboardIcon, Palette, Volume2, Shield, Clock, Type, Quote } from "lucide-react"
+import type { KeyboardLayout } from "@/hooks/use-settings"
 
 interface SettingsProps {
   isOpen: boolean
@@ -19,12 +20,16 @@ interface SettingsProps {
   setTestMode: (mode: "time" | "words" | "quote") => void
   testDuration: number
   setTestDuration: (duration: number) => void
+  wordCount: number
+  setWordCount: (count: number) => void
   soundEnabled: boolean
   setSoundEnabled: (enabled: boolean) => void
   theme: string
   setTheme: (theme: string) => void
   focusMode: boolean
   setFocusMode: (enabled: boolean) => void
+  keyboardLayout: KeyboardLayout
+  setKeyboardLayout: (layout: KeyboardLayout) => void
 }
 
 export function Settings({
@@ -34,14 +39,17 @@ export function Settings({
   setTestMode,
   testDuration,
   setTestDuration,
+  wordCount,
+  setWordCount,
   soundEnabled,
   setSoundEnabled,
   theme,
   setTheme,
   focusMode,
   setFocusMode,
+  keyboardLayout,
+  setKeyboardLayout,
 }: SettingsProps) {
-  const [keyboardLayout, setKeyboardLayout] = useState("qwerty")
   const [animationsEnabled, setAnimationsEnabled] = useState(true)
   const [showWpm, setShowWpm] = useState(true)
   const [showAccuracy, setShowAccuracy] = useState(true)
@@ -130,7 +138,12 @@ export function Settings({
                     <Label>Word Count</Label>
                     <div className="grid grid-cols-4 gap-2">
                       {[10, 25, 50, 100].map((count) => (
-                        <Button key={count} variant="outline" size="sm">
+                        <Button
+                          key={count}
+                          variant={wordCount === count ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setWordCount(count)}
+                        >
                           {count}
                         </Button>
                       ))}
@@ -223,14 +236,14 @@ export function Settings({
             <Card className="bg-gray-800 border-gray-700">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Keyboard className="w-5 h-5" />
+                  <KeyboardIcon className="w-5 h-5" />
                   Keyboard Settings
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-3">
                   <Label>Layout</Label>
-                  <Select value={keyboardLayout} onValueChange={setKeyboardLayout}>
+                  <Select value={keyboardLayout} onValueChange={(v) => setKeyboardLayout(v as KeyboardLayout)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -361,7 +374,14 @@ export function Settings({
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={onClose}>Save Settings</Button>
+          <Button
+            onClick={() => {
+              // provide lightweight visual feedback
+              onClose()
+            }}
+          >
+            Save Settings
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

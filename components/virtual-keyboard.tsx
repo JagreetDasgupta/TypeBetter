@@ -9,6 +9,7 @@ interface KeyboardGuideProps {
   nextChar: string
   pressedKeys: Set<string>
   layout: "qwerty" | "dvorak" | "colemak"
+  size?: "compact" | "expanded"
 }
 
 const keyboardLayouts = {
@@ -101,7 +102,7 @@ const getFingerColor = (finger: string): string => {
   return colors[finger] || "from-gray-500/30 to-gray-600/20 border-gray-400/40"
 }
 
-export function VirtualKeyboard({ currentChar, nextChar, pressedKeys, layout }: KeyboardGuideProps) {
+export function VirtualKeyboard({ currentChar, nextChar, pressedKeys, layout, size = "compact" }: KeyboardGuideProps) {
   const [realtimePressedKeys, setRealtimePressedKeys] = useState<Set<string>>(new Set())
   const keys = keyboardLayouts[layout]
 
@@ -138,7 +139,7 @@ export function VirtualKeyboard({ currentChar, nextChar, pressedKeys, layout }: 
     const fingerColor = getFingerColor(finger)
 
     let className =
-      "h-8 w-8 border transition-all duration-200 font-mono text-xs flex items-center justify-center rounded-lg backdrop-blur-sm relative overflow-hidden "
+      "border transition-all duration-200 font-mono flex items-center justify-center rounded-lg backdrop-blur-sm relative overflow-hidden "
 
     // Currently pressed key
     if (realtimePressedKeys.has(normalizedKey) || realtimePressedKeys.has(key)) {
@@ -163,9 +164,28 @@ export function VirtualKeyboard({ currentChar, nextChar, pressedKeys, layout }: 
     return className
   }
 
+  // Keyboard sizing variables
+  const containerVars: React.CSSProperties = size === "compact"
+    ? {
+        // larger keys
+        ['--vk' as any]: 'clamp(30px, 3.2vw, 46px)',
+        ['--vkf' as any]: 'clamp(10px, 1.0vw, 14px)',
+      }
+    : {
+        // smaller keys for expanded layout
+        ['--vk' as any]: 'clamp(24px, 2.4vw, 38px)',
+        ['--vkf' as any]: 'clamp(9px, 0.9vw, 13px)',
+      }
+
   return (
-    <Card className="keyboard-glass rounded-2xl p-4 max-w-4xl mx-auto shadow-premium">
-      <div className="mb-3 text-center">
+    <Card
+      className={cn(
+        "keyboard-glass rounded-2xl mx-auto shadow-premium inline-block",
+        "p-3 sm:p-4",
+      )}
+      style={{ width: "fit-content", maxWidth: "96vw" }}
+    >
+      <div className="mb-2 text-center">
         <div className="flex items-center justify-center gap-4 text-xs text-slate-300">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-gradient-to-br from-blue-400 to-purple-500 rounded shadow-lg shadow-blue-500/30"></div>
@@ -182,17 +202,18 @@ export function VirtualKeyboard({ currentChar, nextChar, pressedKeys, layout }: 
         </div>
       </div>
 
-      <div className="space-y-1">
+      <div className="space-y-1" style={containerVars}>
         {keys.map((row, rowIndex) => (
           <div key={rowIndex} className="flex justify-center gap-1">
             {rowIndex === 1 && (
               <div
                 className={cn(
-                  "h-8 px-2 flex items-center justify-center rounded-lg border backdrop-blur-sm text-xs",
+                  "flex items-center justify-center rounded-lg border backdrop-blur-sm",
                   realtimePressedKeys.has("tab")
                     ? "bg-gradient-to-br from-blue-400/60 to-purple-500/40 border-blue-300/60 text-white shadow-lg shadow-blue-500/30"
                     : "bg-gradient-to-br from-slate-700/40 to-slate-800/30 border-slate-600/40 text-slate-300",
                 )}
+                style={{ height: 'var(--vk)', minWidth: 'calc(var(--vk) * 1.6)', fontSize: 'var(--vkf)', paddingInline: 8 }}
               >
                 Tab
               </div>
@@ -201,11 +222,12 @@ export function VirtualKeyboard({ currentChar, nextChar, pressedKeys, layout }: 
             {rowIndex === 2 && (
               <div
                 className={cn(
-                  "h-8 px-3 flex items-center justify-center rounded-lg border backdrop-blur-sm text-xs",
+                  "flex items-center justify-center rounded-lg border backdrop-blur-sm",
                   realtimePressedKeys.has("capslock")
                     ? "bg-gradient-to-br from-blue-400/60 to-purple-500/40 border-blue-300/60 text-white shadow-lg shadow-blue-500/30"
                     : "bg-gradient-to-br from-slate-700/40 to-slate-800/30 border-slate-600/40 text-slate-300",
                 )}
+                style={{ height: 'var(--vk)', minWidth: 'calc(var(--vk) * 1.8)', fontSize: 'var(--vkf)', paddingInline: 8 }}
               >
                 Caps
               </div>
@@ -214,18 +236,19 @@ export function VirtualKeyboard({ currentChar, nextChar, pressedKeys, layout }: 
             {rowIndex === 3 && (
               <div
                 className={cn(
-                  "h-8 px-4 flex items-center justify-center rounded-lg border backdrop-blur-sm text-xs",
+                  "flex items-center justify-center rounded-lg border backdrop-blur-sm",
                   realtimePressedKeys.has("shift")
                     ? "bg-gradient-to-br from-blue-400/60 to-purple-500/40 border-blue-300/60 text-white shadow-lg shadow-blue-500/30"
                     : "bg-gradient-to-br from-slate-700/40 to-slate-800/30 border-slate-600/40 text-slate-300",
                 )}
+                style={{ height: 'var(--vk)', minWidth: 'calc(var(--vk) * 2.2)', fontSize: 'var(--vkf)', paddingInline: 10 }}
               >
                 Shift
               </div>
             )}
 
             {row.map((key) => (
-              <div key={key} className={getKeyStyle(key)}>
+              <div key={key} className={getKeyStyle(key)} style={{ width: 'var(--vk)', height: 'var(--vk)', fontSize: 'var(--vkf)' }}>
                 <span className="relative z-10">{key}</span>
               </div>
             ))}
@@ -233,11 +256,12 @@ export function VirtualKeyboard({ currentChar, nextChar, pressedKeys, layout }: 
             {rowIndex === 2 && (
               <div
                 className={cn(
-                  "h-8 px-3 flex items-center justify-center rounded-lg border backdrop-blur-sm text-xs",
+                  "flex items-center justify-center rounded-lg border backdrop-blur-sm",
                   realtimePressedKeys.has("enter")
                     ? "bg-gradient-to-br from-blue-400/60 to-purple-500/40 border-blue-300/60 text-white shadow-lg shadow-blue-500/30"
                     : "bg-gradient-to-br from-slate-700/40 to-slate-800/30 border-slate-600/40 text-slate-300",
                 )}
+                style={{ height: 'var(--vk)', minWidth: 'calc(var(--vk) * 2.0)', fontSize: 'var(--vkf)', paddingInline: 10 }}
               >
                 Enter
               </div>
@@ -246,11 +270,12 @@ export function VirtualKeyboard({ currentChar, nextChar, pressedKeys, layout }: 
             {rowIndex === 3 && (
               <div
                 className={cn(
-                  "h-8 px-4 flex items-center justify-center rounded-lg border backdrop-blur-sm text-xs",
+                  "flex items-center justify-center rounded-lg border backdrop-blur-sm",
                   realtimePressedKeys.has("shift")
                     ? "bg-gradient-to-br from-blue-400/60 to-purple-500/40 border-blue-300/60 text-white shadow-lg shadow-blue-500/30"
                     : "bg-gradient-to-br from-slate-700/40 to-slate-800/30 border-slate-600/40 text-slate-300",
                 )}
+                style={{ height: 'var(--vk)', minWidth: 'calc(var(--vk) * 2.2)', fontSize: 'var(--vkf)', paddingInline: 10 }}
               >
                 Shift
               </div>
@@ -262,53 +287,58 @@ export function VirtualKeyboard({ currentChar, nextChar, pressedKeys, layout }: 
         <div className="flex justify-center gap-1">
           <div
             className={cn(
-              "h-8 px-2 flex items-center justify-center rounded-lg border backdrop-blur-sm text-xs",
+              "flex items-center justify-center rounded-lg border backdrop-blur-sm",
               realtimePressedKeys.has("control")
                 ? "bg-gradient-to-br from-blue-400/60 to-purple-500/40 border-blue-300/60 text-white shadow-lg shadow-blue-500/30"
                 : "bg-gradient-to-br from-slate-700/40 to-slate-800/30 border-slate-600/40 text-slate-300",
             )}
+            style={{ height: 'var(--vk)', minWidth: 'calc(var(--vk) * 1.4)', fontSize: 'var(--vkf)' }}
           >
             Ctrl
           </div>
 
           <div
             className={cn(
-              "h-8 px-2 flex items-center justify-center rounded-lg border backdrop-blur-sm text-xs",
+              "flex items-center justify-center rounded-lg border backdrop-blur-sm",
               realtimePressedKeys.has("alt")
                 ? "bg-gradient-to-br from-blue-400/60 to-purple-500/40 border-blue-300/60 text-white shadow-lg shadow-blue-500/30"
                 : "bg-gradient-to-br from-slate-700/40 to-slate-800/30 border-slate-600/40 text-slate-300",
             )}
+            style={{ height: 'var(--vk)', minWidth: 'calc(var(--vk) * 1.4)', fontSize: 'var(--vkf)' }}
           >
             Alt
           </div>
 
           <div
             className={cn(
-              "h-8 flex-1 max-w-xs flex items-center justify-center rounded-lg border backdrop-blur-sm text-xs",
+              "flex items-center justify-center rounded-lg border backdrop-blur-sm",
               getKeyStyle("Space"),
             )}
+            style={{ height: 'var(--vk)', minWidth: 'calc(var(--vk) * 8.5)', fontSize: 'var(--vkf)' }}
           >
             <span className="relative z-10">Space</span>
           </div>
 
           <div
             className={cn(
-              "h-8 px-2 flex items-center justify-center rounded-lg border backdrop-blur-sm text-xs",
+              "flex items-center justify-center rounded-lg border backdrop-blur-sm",
               realtimePressedKeys.has("alt")
                 ? "bg-gradient-to-br from-blue-400/60 to-purple-500/40 border-blue-300/60 text-white shadow-lg shadow-blue-500/30"
                 : "bg-gradient-to-br from-slate-700/40 to-slate-800/30 border-slate-600/40 text-slate-300",
             )}
+            style={{ height: 'var(--vk)', minWidth: 'calc(var(--vk) * 1.4)', fontSize: 'var(--vkf)' }}
           >
             Alt
           </div>
 
           <div
             className={cn(
-              "h-8 px-2 flex items-center justify-center rounded-lg border backdrop-blur-sm text-xs",
+              "flex items-center justify-center rounded-lg border backdrop-blur-sm",
               realtimePressedKeys.has("control")
                 ? "bg-gradient-to-br from-blue-400/60 to-purple-500/40 border-blue-300/60 text-white shadow-lg shadow-blue-500/30"
                 : "bg-gradient-to-br from-slate-700/40 to-slate-800/30 border-slate-600/40 text-slate-300",
             )}
+            style={{ height: 'var(--vk)', minWidth: 'calc(var(--vk) * 1.4)', fontSize: 'var(--vkf)' }}
           >
             Ctrl
           </div>

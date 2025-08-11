@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Trophy, Medal, Award, Calendar, Clock, Infinity } from "lucide-react"
+import { useHistory } from "@/hooks/use-history"
 
 interface LeaderboardEntry {
   rank: number
@@ -44,6 +45,24 @@ const mockLeaderboardData: LeaderboardEntry[] = [
 export function Leaderboard() {
   const [timeFilter, setTimeFilter] = useState<"daily" | "weekly" | "all-time">("all-time")
   const [activeTab, setActiveTab] = useState("combined")
+  const { history } = useHistory()
+
+  const localTop = useMemo(() => {
+    return history
+      .slice()
+      .sort((a, b) => b.adjustedWpm - a.adjustedWpm)
+      .slice(0, 10)
+      .map((h, idx) => ({
+        rank: idx + 1,
+        username: "You",
+        avatar: "",
+        wpm: h.wpm,
+        accuracy: h.accuracy,
+        score: h.adjustedWpm,
+        tests: history.length,
+        country: "IN",
+      }))
+  }, [history])
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -74,7 +93,7 @@ export function Leaderboard() {
     return flags[country] || "🌍"
   }
 
-  const sortedData = [...mockLeaderboardData].sort((a, b) => {
+  const sortedData = [...(localTop.length ? localTop : mockLeaderboardData)].sort((a, b) => {
     switch (activeTab) {
       case "wpm":
         return b.wpm - a.wpm
@@ -199,7 +218,7 @@ function LeaderboardTable({ data, metric }: LeaderboardTableProps) {
   return (
     <div className="space-y-2">
       {data.map((entry, index) => (
-        <Card key={entry.username} className="bg-gray-800 border-gray-700 p-4">
+        <Card key={`${entry.username}-${entry.rank}-${index}`} className="bg-gray-800 border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">

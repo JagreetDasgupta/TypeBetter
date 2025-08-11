@@ -242,11 +242,12 @@ export function Analytics() {
       .padStart(2, "0")}`
   }
 
-  const weakestFingers = fingerUsageData.sort((a, b) => a.accuracy - b.accuracy).slice(0, 3)
+  // Use non-mutating sorts (clone first) because module-level arrays may be frozen in dev/runtime
+  const weakestFingers = [...fingerUsageData].sort((a, b) => a.accuracy - b.accuracy).slice(0, 3)
 
-  const strongestFingers = fingerUsageData.sort((a, b) => b.accuracy - a.accuracy).slice(0, 3)
+  const strongestFingers = [...fingerUsageData].sort((a, b) => b.accuracy - a.accuracy).slice(0, 3)
 
-  const problemKeys = mockKeystrokeData.sort((a, b) => b.errors - a.errors).slice(0, 5)
+  const problemKeys = [...mockKeystrokeData].sort((a, b) => b.errors - a.errors).slice(0, 5)
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -321,8 +322,8 @@ export function Analytics() {
                           y={key.y + 0.5}
                           textAnchor="middle"
                           dominantBaseline="middle"
-                          className="fill-white text-xs font-mono"
-                          fontSize="0.15"
+                          className="fill-white font-mono"
+                          style={{ fontSize: "0.12px" }}
                         >
                           {key.key === "space" ? "␣" : key.key}
                         </text>

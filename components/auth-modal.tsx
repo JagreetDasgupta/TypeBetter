@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Github, Mail, Facebook, Twitter, Apple, User } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth"
 
 interface AuthModalProps {
   isOpen: boolean
@@ -22,6 +23,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [username, setUsername] = useState("")
+  const { signIn, continueAsGuest } = useAuth()
 
   const handleSocialLogin = async (provider: string) => {
     setIsLoading(true)
@@ -38,11 +40,13 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false)
+      signIn(username || email.split("@")[0] || "User")
       onAuthenticated()
     }, 1000)
   }
 
   const handleGuestMode = () => {
+    continueAsGuest()
     onAuthenticated()
   }
 
