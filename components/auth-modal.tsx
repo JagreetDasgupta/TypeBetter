@@ -164,7 +164,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
-              onClick={() => handleSocialLogin("google")}
+              onClick={() => window.location.href = '/api/auth/google'}
               disabled={isLoading}
               className="bg-gray-800 border-gray-700 hover:bg-gray-700"
             >
