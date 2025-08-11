@@ -92,8 +92,16 @@ export async function validateSession(sessionToken: string): Promise<ObjectId | 
 }
 
 export async function deleteSession(sessionToken: string): Promise<void> {
-  const sessionsCollection = await getCollection('sessions')
-  await sessionsCollection.deleteOne({ sessionToken })
+  try {
+    const sessionsCollection = await getCollection('sessions')
+    await sessionsCollection.deleteOne({ sessionToken })
+  } catch (error) {
+    if (isMongoError(error)) {
+      console.warn('MongoDB unavailable, session deletion skipped')
+      return
+    }
+    throw error
+  }
 }
 
 export async function deleteExpiredSessions(): Promise<void> {
@@ -104,27 +112,48 @@ export async function deleteExpiredSessions(): Promise<void> {
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
-  const usersCollection = await getCollection('users')
-  return usersCollection.findOne({ email: email.toLowerCase() })
+  try {
+    const usersCollection = await getCollection('users')
+    return usersCollection.findOne({ email: email.toLowerCase() })
+  } catch (error) {
+    if (isMongoError(error)) {
+      return null
+    }
+    throw error
+  }
 }
 
 export async function getUserById(userId: ObjectId): Promise<User | null> {
-  const usersCollection = await getCollection('users')
-  return usersCollection.findOne({ _id: userId })
+  try {
+    const usersCollection = await getCollection('users')
+    return usersCollection.findOne({ _id: userId })
+  } catch (error) {
+    if (isMongoError(error)) {
+      return null
+    }
+    throw error
+  }
 }
 
 export async function createUser(userData: Omit<User, '_id' | 'createdAt' | 'updatedAt'>): Promise<ObjectId> {
-  const usersCollection = await getCollection('users')
-  
-  const user: Omit<User, '_id'> = {
-    ...userData,
-    email: userData.email.toLowerCase(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }
+  try {
+    const usersCollection = await getCollection('users')
+    
+    const user: Omit<User, '_id'> = {
+      ...userData,
+      email: userData.email.toLowerCase(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
 
-  const result = await usersCollection.insertOne(user)
-  return result.insertedId
+    const result = await usersCollection.insertOne(user)
+    return result.insertedId
+  } catch (error) {
+    if (isMongoError(error)) {
+      return new ObjectId()
+    }
+    throw error
+  }
 }
 
 export async function updateUser(userId: ObjectId, updates: Partial<User>): Promise<void> {

@@ -1,42 +1,35 @@
 import { MongoClient, Db } from 'mongodb'
 
-if (!process.env.MONGODB_URI) {
-  console.warn('⚠️ MONGODB_URI not found - using fallback configuration')
-  // Don't throw error, just warn
-}
+const isMongoDisabled = process.env.MONGODB_DISABLED === 'true'
 
-const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/typing-practice'
-const options = {
-  tls: true,
-  tlsAllowInvalidCertificates: false,
-  tlsAllowInvalidHostnames: false,
-  serverSelectionTimeoutMS: 5000,
-  connectTimeoutMS: 10000,
-  maxPoolSize: 10,
-  minPoolSize: 1,
-  retryWrites: true,
-  w: 'majority'
+if (isMongoDisabled) {
+  console.log('📴 MongoDB disabled - running in offline mode')
 }
 
 let client: MongoClient
 let clientPromise: Promise<MongoClient>
 
-if (process.env.NODE_ENV === 'development') {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  let globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>
+if (!isMongoDisabled && process.env.MONGODB_URI) {
+  const uri = process.env.MONGODB_URI
+  const options = {
+    serverSelectionTimeoutMS: 5000,
+    connectTimeoutMS: 10000,
   }
 
-  if (!globalWithMongo._mongoClientPromise) {
+  if (process.env.NODE_ENV === 'development') {
+    let globalWithMongo = global as typeof globalThis & {
+      _mongoClientPromise?: Promise<MongoClient>
+    }
+
+    if (!globalWithMongo._mongoClientPromise) {
+      client = new MongoClient(uri, options)
+      globalWithMongo._mongoClientPromise = client.connect()
+    }
+    clientPromise = globalWithMongo._mongoClientPromise
+  } else {
     client = new MongoClient(uri, options)
-    globalWithMongo._mongoClientPromise = client.connect()
+    clientPromise = client.connect()
   }
-  clientPromise = globalWithMongo._mongoClientPromise
-} else {
-  // In production mode, it's best to not use a global variable.
-  client = new MongoClient(uri, options)
-  clientPromise = client.connect()
 }
 
 // Export a module-scoped MongoClient promise. By doing this in a
@@ -44,6 +37,10 @@ if (process.env.NODE_ENV === 'development') {
 export default clientPromise
 
 export async function getDb(): Promise<Db> {
+  if (process.env.MONGODB_DISABLED === 'true') {
+    throw new Error('MongoDB is disabled')
+  }
+  
   try {
     const client = await clientPromise
     return client.db(process.env.MONGODB_DB_NAME || 'typing-practice')
@@ -54,6 +51,10 @@ export async function getDb(): Promise<Db> {
 }
 
 export async function getCollection(collectionName: string) {
+  if (process.env.MONGODB_DISABLED === 'true') {
+    throw new Error('MongoDB is disabled')
+  }
+  
   try {
     const db = await getDb()
     return db.collection(collectionName)

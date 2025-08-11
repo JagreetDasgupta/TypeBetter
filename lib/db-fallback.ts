@@ -17,5 +17,6 @@ export function createFallbackResponse(data: any = null, error: string = 'Databa
 export function isMongoError(error: any): boolean {
   return error?.name === 'MongoServerSelectionError' || 
          error?.name === 'MongoNetworkError' ||
-         error?.code === 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR'
+         error?.code === 'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR' ||
+         error?.message === 'MongoDB is disabled'
 }
