@@ -350,7 +350,7 @@ export default function TypingPlatform() {
 
   if (currentView === "leaderboard") {
     return (
-      <div className="min-h-screen glass-bg">
+      <div className="autoscale-container glass-bg">
         <Navigation
           currentView={currentView}
           setCurrentView={setCurrentView}
@@ -358,7 +358,9 @@ export default function TypingPlatform() {
           setShowAuthModal={setShowAuthModal}
           setShowSettings={setShowSettings}
         />
-        <Leaderboard />
+        <div className="autoscale-content">
+          <Leaderboard />
+        </div>
         <AuthModal
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
@@ -388,7 +390,7 @@ export default function TypingPlatform() {
 
   if (currentView === "dashboard") {
     return (
-      <div className="min-h-screen glass-bg">
+      <div className="autoscale-container glass-bg">
         <Navigation
           currentView={currentView}
           setCurrentView={setCurrentView}
@@ -396,7 +398,9 @@ export default function TypingPlatform() {
           setShowAuthModal={setShowAuthModal}
           setShowSettings={setShowSettings}
         />
-        <Dashboard />
+        <div className="autoscale-content">
+          <Dashboard />
+        </div>
         <AuthModal
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
@@ -425,12 +429,7 @@ export default function TypingPlatform() {
   }
 
   return (
-    <div
-      className={cn(
-        "h-screen glass-bg text-white smooth-transition relative z-10 overflow-hidden layout-transition",
-        focusMode && "focus-mode",
-      )}
-    >
+    <div className={cn("autoscale-container glass-bg text-white", focusMode && "focus-mode")}>
       <Navigation
         currentView={currentView}
         setCurrentView={setCurrentView}
@@ -454,13 +453,11 @@ export default function TypingPlatform() {
         </div>
       )}
 
-      <main
-        className={cn(
-          "min-h-screen grid px-4 relative z-10 layout-transition",
-          focusMode ? "grid-rows-[1fr] place-items-center py-6" : "grid-rows-[auto_auto_1fr]",
-          !focusMode && (isCompactMode ? "py-2 gap-3" : "py-4 gap-5"),
-        )}
-      >
+      <main className={cn(
+        "autoscale-content grid px-4 relative z-10",
+        focusMode ? "grid-rows-[1fr] place-items-center" : "grid-rows-[auto_auto_1fr]",
+        "autoscale-stats"
+      )}>
 
         {/* Animated Stats Bar */}
         {!focusMode && (
@@ -650,17 +647,16 @@ export default function TypingPlatform() {
             <div
               ref={textRef}
               className={cn("mb-4 select-none", focusMode && "text-center")}
+              className="autoscale-text"
               style={{
-                fontFamily:
-                  "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial",
-                fontSize: isCompactMode ? "clamp(14px, 1.2vw, 20px)" : "clamp(16px, 1.6vw, 22px)",
-                lineHeight: isCompactMode ? "clamp(1.6rem, 2.2vw, 2.2rem)" : "clamp(1.8rem, 2.6vw, 2.6rem)",
+                fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial",
+                lineHeight: "1.6",
                 wordWrap: "break-word",
                 overflowWrap: "break-word",
                 letterSpacing: "0.02em",
                 maxWidth: focusMode ? "min(90vw, 1200px)" : undefined,
-                maxHeight: focusMode ? undefined : !isCompactMode ? "min(36vh, 420px)" : undefined,
-                overflow: focusMode ? "visible" : !isCompactMode ? "auto" : "visible",
+                maxHeight: focusMode ? undefined : "40vh",
+                overflow: focusMode ? "visible" : "auto"
               }}
             >
               {text.split("").map((char, index) => renderCharacter(char, index))}
@@ -745,13 +741,13 @@ export default function TypingPlatform() {
 
         {/* Keyboard Guide */}
         {!focusMode && (
-          <div className="flex-shrink-0 pb-4 flex items-start justify-center row-start-3" style={{ minHeight: isCompactMode ? "36vh" : "28vh" }}>
+          <div className="flex-shrink-0 pb-4 flex items-start justify-center row-start-3 min-h-0">
             <VirtualKeyboard
               currentChar={userInput.length > 0 ? userInput[userInput.length - 1] : ""}
               nextChar={text[currentIndex] || ""}
               pressedKeys={new Set()}
               layout={settings.keyboardLayout as any}
-              size={isCompactMode ? "compact" : "expanded"}
+              size="compact"
             />
           </div>
         )}

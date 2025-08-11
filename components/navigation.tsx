@@ -30,8 +30,8 @@ export function Navigation({
     await signOut()
   }
   return (
-    <nav className={cn("glass-nav sticky top-0 z-50 nav-transition", isCompactMode && "compact-mode")}>
-      <div className={cn("container mx-auto px-6 layout-transition", isCompactMode ? "py-2" : "py-3")}>
+    <nav className="glass-nav sticky top-0 z-50 autoscale-nav">
+      <div className="container mx-auto px-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-3">
