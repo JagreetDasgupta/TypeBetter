@@ -1,0 +1,5 @@
+{
+  "/api/admin/populate-dummy/route": "app/api/admin/populate-dummy/route.js",
+  "/page": "app/page.js",
+  "/admin/page": "app/admin/page.js"
+}
