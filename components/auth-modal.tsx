@@ -174,7 +174,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
 
             <Button
               variant="outline"
-              onClick={() => handleSocialLogin("github")}
+              onClick={() => window.location.href = '/api/auth/github'}
               disabled={isLoading}
               className="bg-gray-800 border-gray-700 hover:bg-gray-700"
             >
@@ -186,7 +186,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
           <div className="grid grid-cols-3 gap-2">
             <Button
               variant="outline"
-              onClick={() => handleSocialLogin("twitter")}
+              onClick={() => window.location.href = '/api/auth/twitter'}
               disabled={isLoading}
               className="bg-gray-800 border-gray-700 hover:bg-gray-700"
             >
@@ -195,7 +195,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
 
             <Button
               variant="outline"
-              onClick={() => handleSocialLogin("facebook")}
+              onClick={() => window.location.href = '/api/auth/facebook'}
               disabled={isLoading}
               className="bg-gray-800 border-gray-700 hover:bg-gray-700"
             >
@@ -204,7 +204,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
 
             <Button
               variant="outline"
-              onClick={() => handleSocialLogin("apple")}
+              onClick={() => window.location.href = '/api/auth/apple'}
               disabled={isLoading}
               className="bg-gray-800 border-gray-700 hover:bg-gray-700"
             >
