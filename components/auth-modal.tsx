@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Github, Mail, Facebook, Twitter, Apple, User } from "lucide-react"
+import { Github, Mail, Facebook, User } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 
 interface AuthModalProps {
@@ -183,34 +183,15 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
             </Button>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              variant="outline"
-              onClick={() => window.location.href = '/api/auth/twitter'}
-              disabled={isLoading}
-              className="bg-gray-800 border-gray-700 hover:bg-gray-700"
-            >
-              <Twitter className="w-4 h-4" />
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => window.location.href = '/api/auth/facebook'}
-              disabled={isLoading}
-              className="bg-gray-800 border-gray-700 hover:bg-gray-700"
-            >
-              <Facebook className="w-4 h-4" />
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => window.location.href = '/api/auth/apple'}
-              disabled={isLoading}
-              className="bg-gray-800 border-gray-700 hover:bg-gray-700"
-            >
-              <Apple className="w-4 h-4" />
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            onClick={() => window.location.href = '/api/auth/facebook'}
+            disabled={isLoading}
+            className="w-full bg-gray-800 border-gray-700 hover:bg-gray-700"
+          >
+            <Facebook className="w-4 h-4 mr-2" />
+            Facebook
+          </Button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
