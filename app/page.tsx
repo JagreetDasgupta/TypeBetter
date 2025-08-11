@@ -264,14 +264,20 @@ export default function TypingPlatform() {
 
     // Check if test is complete
     if (value.length >= text.length) {
-      setEndTime(Date.now())
+      const endTime = Date.now()
+      setEndTime(endTime)
       setIsTyping(false)
       typingTracker.stopTracking()
+      
+      // Calculate final stats
+      const finalTimeElapsed = startTime ? Math.round((endTime - startTime) / 1000) : 0
+      const finalWpm = startTime ? Math.round(((value.length / 5) / ((endTime - startTime) / 1000)) * 60) : 0
+      
       addResult({
         mode: testMode,
-        durationSeconds: startTime ? Math.round((Date.now() - startTime) / 1000) : 0,
+        durationSeconds: finalTimeElapsed,
         textLength: text.length,
-        wpm: stats.wpm,
+        wpm: finalWpm,
         accuracy: stats.accuracy,
         errors: stats.errors,
       })
@@ -280,14 +286,19 @@ export default function TypingPlatform() {
 
     // Check time-based completion
     if (testMode === "time" && startTime && (Date.now() - startTime) / 1000 >= testDuration) {
-      setEndTime(Date.now())
+      const endTime = Date.now()
+      setEndTime(endTime)
       setIsTyping(false)
       typingTracker.stopTracking()
+      
+      // Calculate final stats for time-based test
+      const finalWpm = Math.round(((value.length / 5) / testDuration) * 60)
+      
       addResult({
         mode: testMode,
         durationSeconds: testDuration,
         textLength: text.length,
-        wpm: stats.wpm,
+        wpm: finalWpm,
         accuracy: stats.accuracy,
         errors: stats.errors,
       })
@@ -326,15 +337,15 @@ export default function TypingPlatform() {
     inputRef.current?.focus()
   }
 
-  // Calculate visible text range (3 lines)
+  // Calculate visible text range (2 lines)
   const getVisibleText = () => {
     const words = text.split(' ')
-    const wordsPerLine = 12 // Approximate words per line
+    const wordsPerLine = 15 // Approximate words per line
     const totalLines = Math.ceil(words.length / wordsPerLine)
-    const currentLine = Math.floor(currentIndex / (wordsPerLine * 6)) // Approx chars per line
+    const currentLine = Math.floor(currentIndex / (wordsPerLine * 7)) // Approx chars per line
     
-    const startLine = Math.max(0, currentLine - 1)
-    const endLine = Math.min(totalLines, startLine + 3)
+    const startLine = Math.max(0, currentLine)
+    const endLine = Math.min(totalLines, startLine + 2)
     
     const startWordIndex = startLine * wordsPerLine
     const endWordIndex = endLine * wordsPerLine
@@ -677,7 +688,7 @@ export default function TypingPlatform() {
                 overflowWrap: "break-word",
                 letterSpacing: "0.02em",
                 maxWidth: focusMode ? "min(90vw, 1200px)" : undefined,
-                height: "4.5em",
+                height: "3.6em",
                 overflow: "hidden"
               }}
             >

@@ -77,12 +77,12 @@ export function ResultsModal({ isOpen, onClose, stats, onRetry, isDisqualified, 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl bg-gray-900 border-gray-700 text-white">
+      <DialogContent className="max-w-3xl bg-gray-900 border-gray-700 text-white max-h-[80vh] w-[95vw] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">Test Results</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-3 overflow-y-auto flex-1 pr-2">
           {/* Performance Rating */}
           <div className="text-center">
             <div className={`text-3xl font-bold ${performance.color}`}>{performance.rating}</div>
@@ -95,25 +95,25 @@ export function ResultsModal({ isOpen, onClose, stats, onRetry, isDisqualified, 
           </div>
 
           {/* Main Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="bg-gray-800 border-gray-700 p-6 text-center">
-              <Trophy className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-              <div className="text-4xl font-bold text-blue-400 mb-1">{animatedWpm}</div>
-              <div className="text-gray-400">Words Per Minute</div>
-              <Progress value={(animatedWpm / 100) * 100} className="mt-2" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 autoscale-stats">
+            <Card className="bg-gray-800 border-gray-700 p-3 text-center">
+              <Trophy className="w-6 h-6 text-blue-400 mx-auto mb-1" />
+              <div className="text-2xl font-bold text-blue-400 mb-1">{animatedWpm}</div>
+              <div className="text-xs text-gray-400">Words Per Minute</div>
+              <Progress value={(animatedWpm / 100) * 100} className="mt-1 h-1" />
             </Card>
 
-            <Card className="bg-gray-800 border-gray-700 p-6 text-center">
-              <Target className="w-8 h-8 text-green-400 mx-auto mb-2" />
-              <div className="text-4xl font-bold text-green-400 mb-1">{animatedAccuracy}%</div>
-              <div className="text-gray-400">Accuracy</div>
-              <Progress value={animatedAccuracy} className="mt-2" />
+            <Card className="bg-gray-800 border-gray-700 p-3 text-center">
+              <Target className="w-6 h-6 text-green-400 mx-auto mb-1" />
+              <div className="text-2xl font-bold text-green-400 mb-1">{animatedAccuracy}%</div>
+              <div className="text-xs text-gray-400">Accuracy</div>
+              <Progress value={animatedAccuracy} className="mt-1 h-1" />
             </Card>
 
-            <Card className="bg-gray-800 border-gray-700 p-6 text-center">
-              <Clock className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-              <div className="text-4xl font-bold text-purple-400 mb-1">{stats.timeElapsed}s</div>
-              <div className="text-gray-400">Time Elapsed</div>
+            <Card className="bg-gray-800 border-gray-700 p-3 text-center">
+              <Clock className="w-6 h-6 text-purple-400 mx-auto mb-1" />
+              <div className="text-2xl font-bold text-purple-400 mb-1">{stats.timeElapsed}s</div>
+              <div className="text-xs text-gray-400">Time Elapsed</div>
             </Card>
           </div>
 
@@ -129,20 +129,21 @@ export function ResultsModal({ isOpen, onClose, stats, onRetry, isDisqualified, 
             </Card>
           )}
 
-          {/* Consistency Chart */}
-          <Card className="bg-gray-800 border-gray-700 p-6">
-            <h3 className="text-lg font-semibold mb-4">Typing Consistency</h3>
-            <div className="h-64">
+          {/* Consistency Chart - Hidden on small screens */}
+          <Card className="bg-gray-800 border-gray-700 p-3 hidden md:block">
+            <h3 className="text-sm font-semibold mb-2">Typing Consistency</h3>
+            <div className="h-32">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={consistencyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="time" stroke="#9CA3AF" />
-                  <YAxis stroke="#9CA3AF" />
+                  <XAxis dataKey="time" stroke="#9CA3AF" fontSize={10} />
+                  <YAxis stroke="#9CA3AF" fontSize={10} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "#1F2937",
                       border: "1px solid #374151",
                       borderRadius: "8px",
+                      fontSize: "12px"
                     }}
                   />
                   <Line
@@ -150,7 +151,7 @@ export function ResultsModal({ isOpen, onClose, stats, onRetry, isDisqualified, 
                     dataKey="wpm"
                     stroke="#3B82F6"
                     strokeWidth={2}
-                    dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
+                    dot={false}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -158,50 +159,51 @@ export function ResultsModal({ isOpen, onClose, stats, onRetry, isDisqualified, 
           </Card>
 
           {/* Additional Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 autoscale-stats">
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400">{stats.errors}</div>
-              <div className="text-sm text-gray-400">Errors</div>
+              <div className="text-xl font-bold text-yellow-400">{stats.errors}</div>
+              <div className="text-xs text-gray-400">Errors</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-400">{stats.streak}</div>
-              <div className="text-sm text-gray-400">Best Streak</div>
+              <div className="text-xl font-bold text-orange-400">{Math.max(stats.streak, 1)}</div>
+              <div className="text-xs text-gray-400">Best Streak</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-cyan-400">{Math.round((stats.wpm * stats.accuracy) / 100)}</div>
-              <div className="text-sm text-gray-400">Adjusted WPM</div>
+              <div className="text-xl font-bold text-cyan-400">{Math.round((stats.wpm * stats.accuracy) / 100) || stats.wpm}</div>
+              <div className="text-xs text-gray-400">Adjusted WPM</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-pink-400">{Math.round((stats.timeElapsed / 60) * 100) / 100}</div>
-              <div className="text-sm text-gray-400">Minutes</div>
+              <div className="text-xl font-bold text-pink-400">{Math.round((stats.timeElapsed / 60) * 100) / 100}</div>
+              <div className="text-xs text-gray-400">Minutes</div>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button onClick={onRetry} className="flex items-center gap-2">
-              <RotateCcw className="w-4 h-4" />
-              Try Again
-            </Button>
-            <Button
-              variant="outline"
-              className="flex items-center gap-2 bg-transparent"
-              onClick={async () => {
-                const summary = `Typing Test Results\nWPM: ${stats.wpm}\nAccuracy: ${stats.accuracy}%\nErrors: ${stats.errors}\nTime: ${stats.timeElapsed}s${isDisqualified ? "\nStatus: Disqualified (anti-cheat)" : ""}`
-                try {
-                  await navigator.clipboard.writeText(summary)
-                } catch (e) {
-                  // ignore clipboard errors
-                }
-              }}
-            >
-              <Share2 className="w-4 h-4" />
-              Share Results
-            </Button>
-            <Button variant="ghost" onClick={onClose}>
-              Close
-            </Button>
-          </div>
+        </div>
+        
+        {/* Action Buttons - Fixed at bottom */}
+        <div className="flex flex-col sm:flex-row gap-2 justify-center pt-3 border-t border-gray-700 mt-3">
+          <Button onClick={onRetry} className="flex items-center gap-2 text-sm px-3 py-2">
+            <RotateCcw className="w-4 h-4" />
+            Try Again
+          </Button>
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 bg-transparent text-sm px-3 py-2"
+            onClick={async () => {
+              const summary = `Typing Test Results\nWPM: ${stats.wpm}\nAccuracy: ${stats.accuracy}%\nErrors: ${stats.errors}\nTime: ${stats.timeElapsed}s${isDisqualified ? "\nStatus: Disqualified (anti-cheat)" : ""}`
+              try {
+                await navigator.clipboard.writeText(summary)
+              } catch (e) {
+                // ignore clipboard errors
+              }
+            }}
+          >
+            <Share2 className="w-4 h-4" />
+            Share
+          </Button>
+          <Button variant="ghost" onClick={onClose} className="text-sm px-3 py-2">
+            Close
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

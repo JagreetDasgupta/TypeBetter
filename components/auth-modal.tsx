@@ -33,12 +33,29 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+    
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        signIn(data.user?.username || email.split("@")[0] || "User")
+        onAuthenticated()
+      } else {
+        console.error('Login failed')
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      // Fallback to local sign in
       signIn(username || email.split("@")[0] || "User")
       onAuthenticated()
-    }, 1000)
+    }
+    
+    setIsLoading(false)
   }
 
   const handleGuestMode = () => {
@@ -140,7 +157,7 @@ export function AuthModal({ isOpen, onClose, onAuthenticated }: AuthModalProps) 
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading} onClick={handleEmailLogin}>
                 {isLoading ? "Creating account..." : "Sign Up"}
               </Button>
             </form>

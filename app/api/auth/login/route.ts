@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserByEmail, comparePassword, createUserSession, updateUser } from '@/lib/auth'
 import { ObjectId } from 'mongodb'
+import { isMongoError } from '@/lib/db-fallback'
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +18,35 @@ export async function POST(request: NextRequest) {
     // Get user by email
     const user = await getUserByEmail(email)
     if (!user) {
+      // If MongoDB is disabled, create a mock user for development
+      if (process.env.MONGODB_DISABLED === 'true') {
+        const mockUser = {
+          _id: new ObjectId(),
+          email,
+          username: email.split('@')[0],
+          preferences: {},
+          stats: {}
+        }
+        
+        const response = NextResponse.json(
+          { 
+            success: true, 
+            message: 'Login successful (offline mode)',
+            user: mockUser
+          },
+          { status: 200 }
+        )
+        
+        response.cookies.set('session-token', 'offline-session', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 30 * 24 * 60 * 60,
+        })
+        
+        return response
+      }
+      
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
@@ -69,6 +99,36 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Login error:', error)
+    
+    // If MongoDB error and disabled, provide offline login
+    if (isMongoError(error) && process.env.MONGODB_DISABLED === 'true') {
+      const mockUser = {
+        _id: new ObjectId(),
+        email: email || 'user@example.com',
+        username: email?.split('@')[0] || 'User',
+        preferences: {},
+        stats: {}
+      }
+      
+      const response = NextResponse.json(
+        { 
+          success: true, 
+          message: 'Login successful (offline mode)',
+          user: mockUser
+        },
+        { status: 200 }
+      )
+      
+      response.cookies.set('session-token', 'offline-session', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60,
+      })
+      
+      return response
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
