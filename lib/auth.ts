@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import { getCollection } from './mongodb'
 import { User, UserSession } from './models'
 import { ObjectId } from 'mongodb'
+import { isMongoError, createFallbackResponse } from './db-fallback'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
 const SESSION_SECRET = process.env.SESSION_SECRET || 'your-session-secret-change-this-in-production'
@@ -34,43 +35,60 @@ export function generateSessionToken(): string {
 
 export async function createUserSession(userId: ObjectId, userAgent?: string, ipAddress?: string): Promise<string> {
   const sessionToken = generateSessionToken()
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+  
+  try {
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
 
-  const session: Omit<UserSession, '_id'> = {
-    userId,
-    sessionToken,
-    expiresAt,
-    createdAt: new Date(),
-    lastActivityAt: new Date(),
-    userAgent,
-    ipAddress,
+    const session: Omit<UserSession, '_id'> = {
+      userId,
+      sessionToken,
+      expiresAt,
+      createdAt: new Date(),
+      lastActivityAt: new Date(),
+      userAgent,
+      ipAddress,
+    }
+
+    const sessionsCollection = await getCollection('sessions')
+    await sessionsCollection.insertOne(session)
+  } catch (error) {
+    if (isMongoError(error)) {
+      console.warn('MongoDB unavailable, session created locally only')
+    } else {
+      throw error
+    }
   }
-
-  const sessionsCollection = await getCollection('sessions')
-  await sessionsCollection.insertOne(session)
 
   return sessionToken
 }
 
 export async function validateSession(sessionToken: string): Promise<ObjectId | null> {
-  const sessionsCollection = await getCollection('sessions')
-  
-  const session = await sessionsCollection.findOne({
-    sessionToken,
-    expiresAt: { $gt: new Date() }
-  })
+  try {
+    const sessionsCollection = await getCollection('sessions')
+    
+    const session = await sessionsCollection.findOne({
+      sessionToken,
+      expiresAt: { $gt: new Date() }
+    })
 
-  if (!session) {
-    return null
+    if (!session) {
+      return null
+    }
+
+    // Update last activity
+    await sessionsCollection.updateOne(
+      { _id: session._id },
+      { $set: { lastActivityAt: new Date() } }
+    )
+
+    return session.userId
+  } catch (error) {
+    if (isMongoError(error)) {
+      console.warn('MongoDB unavailable, session validation failed')
+      return null
+    }
+    throw error
   }
-
-  // Update last activity
-  await sessionsCollection.updateOne(
-    { _id: session._id },
-    { $set: { lastActivityAt: new Date() } }
-  )
-
-  return session.userId
 }
 
 export async function deleteSession(sessionToken: string): Promise<void> {
@@ -120,4 +138,19 @@ export async function updateUser(userId: ObjectId, updates: Partial<User>): Prom
       } 
     }
   )
+}
+
+export async function verifySession(sessionToken: string): Promise<User | null> {
+  try {
+    const userId = await validateSession(sessionToken)
+    if (!userId) return null
+    
+    return await getUserById(userId)
+  } catch (error) {
+    if (isMongoError(error)) {
+      console.warn('MongoDB unavailable, session verification failed')
+      return null
+    }
+    throw error
+  }
 }

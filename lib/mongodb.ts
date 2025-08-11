@@ -6,7 +6,17 @@ if (!process.env.MONGODB_URI) {
 }
 
 const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/typing-practice'
-const options = {}
+const options = {
+  tls: true,
+  tlsAllowInvalidCertificates: false,
+  tlsAllowInvalidHostnames: false,
+  serverSelectionTimeoutMS: 5000,
+  connectTimeoutMS: 10000,
+  maxPoolSize: 10,
+  minPoolSize: 1,
+  retryWrites: true,
+  w: 'majority'
+}
 
 let client: MongoClient
 let clientPromise: Promise<MongoClient>
@@ -34,11 +44,21 @@ if (process.env.NODE_ENV === 'development') {
 export default clientPromise
 
 export async function getDb(): Promise<Db> {
-  const client = await clientPromise
-  return client.db(process.env.MONGODB_DB_NAME || 'typing-practice')
+  try {
+    const client = await clientPromise
+    return client.db(process.env.MONGODB_DB_NAME || 'typing-practice')
+  } catch (error) {
+    console.error('MongoDB connection error:', error)
+    throw new Error('Failed to connect to database')
+  }
 }
 
 export async function getCollection(collectionName: string) {
-  const db = await getDb()
-  return db.collection(collectionName)
+  try {
+    const db = await getDb()
+    return db.collection(collectionName)
+  } catch (error) {
+    console.error(`Error getting collection ${collectionName}:`, error)
+    throw error
+  }
 }
